@@ -10,6 +10,7 @@ from io import StringIO
 import csv
 from mac_vendor_lookup import MacLookup
 import copy
+import time
 
 
 def debug(str):
@@ -148,10 +149,10 @@ def make_bssid_list(ssids):
     
     return slist
 
-def print_bssids(slist):
-    print('--- ------------------------------ ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
-    print('%-3s %-30s %-18s %-7s %-6s %-10s %-20s %-10s %-20s' % ('No', 'SSID', 'MAC', 'Channel', 'Signal', 'Radio type', 'Auth', 'Encr', 'Manufacturer'))
-    print('--- ------------------------------ ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
+def print_bssids(slist, filter):
+    print('--- -------------------- ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
+    print('%-3s %-20s %-18s %-7s %-6s %-10s %-20s %-10s %-20s' % ('No', 'SSID', 'MAC', 'Channel', 'Signal', 'Radio type', 'Auth', 'Encr', 'Manufacturer'))
+    print('--- -------------------- ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
 
     '''
     Black: \u001b[30m
@@ -167,8 +168,11 @@ def print_bssids(slist):
     color=[u"\u001b[31m", u"\u001b[34m"]
     idx = 1  
     for s in slist:
-        #print('%3d %s %-30s %-18s %-7d %-6s %-10s %-20s %-10s %-20s %s' % (color[idx%2], idx, s['ssid'], s['mac'], s['Channel'], s['Signal'], s['Radio type'], s['Authentication'], s['Encryption'], s['manufacturer'], u"\u001b[0m"))
-        print('%3d %-30s %-18s %-7d %-6s %-10s %-20s %-10s %-20s' % ( idx, s['ssid'], s['MAC'], s['Channel'], s['Signal'], s['Radio type'], s['Authentication'], s['Encryption'], s['Manufacturer']))
+        #print('%3d %s %-20s %-18s %-7d %-6s %-10s %-20s %-10s %-20s %s' % (color[idx%2], idx, s['ssid'], s['mac'], s['Channel'], s['Signal'], s['Radio type'], s['Authentication'], s['Encryption'], s['manufacturer'], u"\u001b[0m"))
+        if filter != None and filter not in s['ssid'] and filter not in s['MAC']:
+            continue
+
+        print('%3d %-20s %-18s %-7d %-6s %-10s %-20s %-10s %-20s' % ( idx, s['ssid'], s['MAC'], s['Channel'], s['Signal'], s['Radio type'], s['Authentication'], s['Encryption'], s['Manufacturer']))
         #print(s)
         idx = idx + 1
 
@@ -176,17 +180,7 @@ def print_result(str, ssid, channel):
     for line in str.splitlines():
         print(line)
 
-def main():
-    global verbose
-    argparser = argparse.ArgumentParser()
-    argparser.add_argument("-s", "--sortby", help="Sort by any field such as SSID, MAC, Channel, Signal, etc.", default="ssid")
-    argparser.add_argument('-v', '--verbose', action='store_true')
-
-    args = argparser.parse_args()
-
-    verbose = args.verbose
-    #verbose = True
-
+def dump_ssids(args):
     s = scan()
     ssids_raw = parse_result(s)
     ssids = []
@@ -198,8 +192,27 @@ def main():
 
     slist = make_bssid_list(ssids)
     slist.sort(key=lambda k: (k[args.sortby], k['MAC']))
-    print_bssids(slist)
-	
+    print_bssids(slist, args.filter)
+    sys.stdout.flush()
+
+def main():
+    global verbose
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("-s", "--sortby", help="Sort by any field such as SSID, MAC, Channel, Signal, etc.", default="ssid")
+    argparser.add_argument('-v', '--verbose', action='store_true')
+    argparser.add_argument("-i", "--interval", help="scan scan interval in seconds, default 1 s", type=int, default=1)
+    argparser.add_argument("-c", "--count", help="scan count ", type=int, default=1)
+    argparser.add_argument("-f", "--filter", help="filter for SSID or MAC", default=None)
+
+    args = argparser.parse_args()
+
+    verbose = args.verbose
+    #verbose = True
+    for i in  range(0, args.count):
+            dump_ssids(args)
+            if args.count > 1:
+                time.sleep(args.interval)
+
 if __name__ == "__main__":
 	main()
 
