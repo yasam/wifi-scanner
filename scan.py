@@ -149,11 +149,12 @@ def make_bssid_list(ssids):
     
     return slist
 
-def print_bssids(slist, filter):
+def print_header():
     print('--- -------------------- ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
     print('%-3s %-20s %-18s %-7s %-6s %-10s %-20s %-10s %-20s' % ('No', 'SSID', 'MAC', 'Channel', 'Signal', 'Radio type', 'Auth', 'Encr', 'Manufacturer'))
     print('--- -------------------- ------------------ ------- ------ ---------- -------------------- ---------- --------------------')
 
+def print_bssids(slist, filter):
     '''
     Black: \u001b[30m
     Red: \u001b[31m
@@ -208,9 +209,10 @@ def main():
 
     verbose = args.verbose
     #verbose = True
+    print_header()
     for i in  range(0, args.count):
             dump_ssids(args)
-            if args.count > 1:
+            if i < (args.count - 1):
                 time.sleep(args.interval)
 
 if __name__ == "__main__":
